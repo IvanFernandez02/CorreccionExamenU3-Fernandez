@@ -1,0 +1,121 @@
+{% extends 'template.html' %}
+
+{% block content %}
+<div class="container-fluid p-0">
+    <!-- Title Section -->
+    <div class="bg-primary text-white py-5">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">
+                <i class="bi bi-diagram-3 me-2"></i> Grafo en Gráfico
+            </h1>
+            <p class="lead">Visualización interactiva del grafo de cargas eléctricas.</p>
+        </div>
+    </div>
+
+    <!-- Graph Container -->
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-lg">
+                    <div class="card-body p-0">
+                        <div id="mynetwork" style="height: 600px;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Vis Network Library -->
+<script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+<script>
+    // Parse graph data
+    const graphData = JSON.parse('{{ graph_data | tojson | safe }}');
+
+    if (graphData && graphData.nodes && graphData.edges) {
+        // Node configuration
+        const nodes = new vis.DataSet(graphData.nodes.map(node => ({
+            id: node.id,
+            label: node.carga,
+            color: node.color,
+            size: 20,
+            font: {
+                size: 18,
+                face: 'system-ui', // Bootstrap default font
+                color: '#212529',
+                align: 'center'
+            },
+            borderWidth: 3,
+            shape: 'dot'
+        })));
+
+        // Edge configuration
+        const edges = new vis.DataSet(graphData.edges.map(edge => ({
+            from: edge.from,
+            to: edge.to,
+            color: edge.color,
+            label: edge.weight.toString(),
+            font: { 
+                size: 14, 
+                align: 'top',
+                face: 'system-ui'
+            },
+            width: 2
+        })));
+
+        // Network configuration
+        const container = document.getElementById('mynetwork');
+        const data = { nodes, edges };
+
+        const options = { 
+            nodes: {
+                shape: "ellipse", 
+                size: 50, 
+                font: { 
+                    size: 20,   
+                    align: 'center',
+                    face: 'system-ui' 
+                }, 
+            },
+            edges: { 
+                arrows: "to", 
+                physics: false 
+            },
+            physics: {
+                enabled: true,
+                barnesHut: {
+                    gravitationalConstant: -5000,
+                    centralGravity: 0.1,
+                    springLength: 240,
+                    springConstant: 0.024,
+                },
+                repulsion: {
+                    springLength: 440,
+                },
+                stabilization: { 
+                    iterations: 150 
+                },
+            },
+            layout: {
+                randomSeed: 1,
+            }
+        };
+
+        // Initialize network
+        new vis.Network(container, data, options);
+    } else {
+        console.error("Error: No se encontraron datos de grafo");
+        
+        // Add error message
+        const container = document.getElementById('mynetwork');
+        container.innerHTML = `
+            <div class="alert alert-danger text-center p-4">
+                <h4 class="alert-heading">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i> Error
+                </h4>
+                <p class="mb-0">No se pudieron cargar los datos del grafo. Por favor, intente recargar la página.</p>
+            </div>
+        `;
+    }
+</script>
+{% endblock %}
