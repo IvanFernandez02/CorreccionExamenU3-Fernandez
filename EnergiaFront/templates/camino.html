@@ -1,0 +1,149 @@
+{% extends 'template.html' %}
+
+{% block content %}
+<!-- Contenedor principal -->
+<div class="container-fluid p-0">
+    <!-- Título con fondo azul -->
+    <div class="bg-primary text-white py-5">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold">
+                <i class="bi bi-graph-up me-2"></i> Ejecutar Algoritmos de Grafos
+            </h1>
+            <p class="lead">Seleccione un nodo y ejecute los algoritmos disponibles.</p>
+        </div>
+    </div>
+
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card border-0 shadow-lg bg-light">
+                    <div class="card-body">
+                        <div class="row g-4">
+                            <!-- Sección de Ejecutar BUSQUEDAANCHURA -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <form id="busquedaanchuraForm" class="mt-3">
+                                            <div class="mb-3">
+                                                <label for="inicio" class="form-label text-uppercase fw-bold">Inicio:</label>
+                                                <select id="inicio" name="inicio" class="form-select">
+                                                    {% for cargaelectrica in data %}
+                                                        <option value="{{ cargaelectrica.labelId }}">{{ cargaelectrica.carga }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100 text-uppercase fw-bold">Ejecutar</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sección de Calcular Ruta Energética -->
+                            <div class="col-md-6">
+                                <div class="card border-0 shadow-sm">
+                                    <div class="card-body">
+                                        <h2 class="text-center text-uppercase fw-bold mb-3">Calcular Ruta Energética</h2>
+                                        <form id="rutaEnergiaForm" class="mt-3">
+                                            <div class="mb-3">
+                                                <label for="inicioRuta" class="form-label text-uppercase fw-bold">Inicio:</label>
+                                                <select id="inicioRuta" name="inicioRuta" class="form-select">
+                                                    {% for cargaelectrica in data %}
+                                                        <option value="{{ cargaelectrica.labelId }}">{{ cargaelectrica.carga }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="finRuta" class="form-label text-uppercase fw-bold">Fin:</label>
+                                                <select id="finRuta" name="finRuta" class="form-select">
+                                                    {% for cargaelectrica in data %}
+                                                        <option value="{{ cargaelectrica.labelId }}">{{ cargaelectrica.carga }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100 text-uppercase fw-bold">Calcular Ruta</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mensaje de carga -->
+                        <div id="loadingMessage" class="mt-3 text-warning text-center d-none">
+                            Cargando...
+                        </div>
+
+                        <!-- Mostrar resultados -->
+                        <div id="result" class="mt-4 text-center d-none">
+                            <h2 class="text-uppercase fw-bold">Resultado:</h2>
+                            <div id="resultadoText" class="fs-5 white-space-pre-wrap"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.white-space-pre-wrap {
+    white-space: pre-wrap;
+}
+</style>
+
+<script>
+    // BUSQUEDAANCHURA Form Submission
+    document.getElementById("busquedaanchuraForm").addEventListener("submit", function(event) {
+        event.preventDefault();
+        const inicio = document.getElementById("inicio").value;
+        document.getElementById("loadingMessage").classList.remove("d-none");
+        document.getElementById("result").classList.add("d-none");
+
+        fetch(`/api/cargaelectrica/busquedaanchura/${inicio}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById("resultadoText").textContent = data ? data.respuesta : "Error en ejecución";
+                document.getElementById("result").classList.remove("d-none");
+            })
+            .catch(error => {
+                document.getElementById("resultadoText").textContent = "Error de conexión.";
+                document.getElementById("result").classList.remove("d-none");
+            })
+            .finally(() => document.getElementById("loadingMessage").classList.add("d-none"));
+    });
+
+    // Ruta Energética Form Submission
+    document.getElementById("rutaEnergiaForm").addEventListener("submit", async function(event) {
+        event.preventDefault();
+        const inicio = document.getElementById("inicioRuta").value;
+        const fin = document.getElementById("finRuta").value;
+        document.getElementById("loadingMessage").classList.remove("d-none");
+        document.getElementById("result").classList.add("d-none");
+
+        try {
+            const response = await fetch(`/calcular_ruta_energia/${inicio}/${fin}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al calcular la ruta');
+            }
+
+            document.getElementById("resultadoText").textContent = data.resultado || data.error || "No se pudo obtener el resultado";
+            
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById("resultadoText").textContent = 
+                "Error: " + (error.message || "Por favor, asegúrese de que el grafo ha sido creado en la sección 'Mapa de Grafos'.");
+        } finally {
+            document.getElementById("result").classList.remove("d-none");
+            document.getElementById("loadingMessage").classList.add("d-none");
+        }
+    });
+</script>
+
+{% endblock %}

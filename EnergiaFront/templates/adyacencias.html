@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>Correccion Examen Unidad 3</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    <!-- Navbar (Sidebar moved to top) -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fs-4" href="#">Grafos de Cargas Eléctricas</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/mapagrafos">
+                            <i class="bi bi-map me-2"></i> Mapa de Grafos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/adyacencias">
+                            <i class="bi bi-table me-2"></i> Matriz de adyacencia
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/camino">
+                            <i class="bi bi-search me-2"></i> Buscar Camino
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow-1 p-4 bg-light">
+        <div class="container">
+            {% block content %}
+            <div class="text-center mb-5">
+                <h1 class="display-4 fw-bold">Adyacencias Random</h1>
+                <button id="nuevaAdyacencia" class="btn btn-primary btn-lg">
+                    <i class="bi bi-arrow-repeat me-2"></i> Genere una nueva adyacencia aquí!!
+                </button>
+                <div id="loadingMessage" class="alert alert-info mt-3 d-none">
+                    <i class="bi bi-hourglass-split me-2"></i> Cargando las nuevas adyacencias...
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table id="tabla" class="table table-bordered table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Cargas Eléctricas</th>
+                            {% for item in lista %}
+                                <th>{{ item.carga }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in lista %}
+                            <tr>
+                                <td>{{ item.carga }}</td>
+                                {% for otro_item in lista %}
+                                    <td>
+                                        {% set found = false %}
+                                        {% for destino in item.destinations %}
+                                            {% if destino.to == otro_item.labelId %}
+                                                <span>{{ destino.weight }}</span>
+                                                {% set found = true %}
+                                            {% endif %}
+                                        {% endfor %}
+                                        {% if not found %}
+                                            <span></span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <script>
+            document.getElementById("nuevaAdyacencia").addEventListener("click", function() {
+                // Show loading message
+                document.getElementById("loadingMessage").classList.remove("d-none");
+                
+                // Make GET request to Flask
+                fetch('/nueva_adyacencia', {
+                    method: 'GET'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    location.reload();
+                    document.getElementById("loadingMessage").classList.add("d-none");
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    document.getElementById("loadingMessage").classList.add("d-none");
+                });
+            });
+            </script>
+            {% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-3">
+        <p class="mb-0">Correccion Examen Unidad 3 - Fernandez</p>
+    </footer>
+
+    <!-- Bootstrap JS (Optional) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
